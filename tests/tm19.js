@@ -1,0 +1,12 @@
+const {chromium}=require('playwright');const fs=require('fs');
+(async()=>{const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium',args:['--use-gl=swiftshader','--enable-webgl']});
+const ctx=await b.newContext({viewport:{width:412,height:860},deviceScaleFactor:2,isMobile:true,hasTouch:true});const p=await ctx.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
+await p.route(/three\.min\.js/,r=>r.fulfill({body:fs.readFileSync('lib/node_modules/three/build/three.min.js'),contentType:'application/javascript'}));
+await p.route(/OrbitControls\.js/,r=>r.fulfill({body:fs.readFileSync('lib/node_modules/three/examples/js/controls/OrbitControls.js'),contentType:'application/javascript'}));
+await p.route(/fonts\.googleapis/,r=>r.fulfill({body:'',contentType:'text/css'}));
+await p.goto('file://'+process.cwd()+'/pista-libre-v2.html');await p.waitForTimeout(2000);await p.evaluate(()=>{try{localStorage.clear()}catch(e){}document.getElementById('bNew').click();});await p.waitForTimeout(1200);
+await p.evaluate(()=>{window.PL.G.money=2e6;window.PL.G.star=3;const c=document.querySelector('#cats [data-c="e"]');c.scrollIntoView();c.click();});await p.waitForTimeout(400);
+await p.evaluate(()=>document.querySelector('.tool[data-k="fboBase"]').click());await p.waitForTimeout(2500);
+await p.screenshot({path:'m19a.png'});
+console.log(await p.evaluate(()=>JSON.stringify({on:window.PL.G.fbo.on,cats:[...document.querySelectorAll('#cats button')].map(b=>b.textContent).join(',')})));
+console.log('ERR',errs);await b.close();})();

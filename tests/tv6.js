@@ -1,0 +1,20 @@
+const {chromium}=require('playwright');const fs=require('fs');
+(async()=>{const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium',args:['--use-gl=swiftshader','--enable-webgl']});
+const p=await b.newPage({viewport:{width:1300,height:850}});const errs=[];p.on('pageerror',e=>errs.push(e.message+' | '+(e.stack||'').split('\n').slice(1,3).join(' ')));p.on('console',m=>{if(m.type()==='error')errs.push('C:'+m.text())});
+await p.route(/three\.min\.js/,r=>r.fulfill({body:fs.readFileSync('lib/node_modules/three/build/three.min.js'),contentType:'application/javascript'}));
+await p.route(/OrbitControls\.js/,r=>r.fulfill({body:fs.readFileSync('lib/node_modules/three/examples/js/controls/OrbitControls.js'),contentType:'application/javascript'}));
+await p.route(/fonts\.googleapis/,r=>r.fulfill({body:'',contentType:'text/css'}));
+await p.goto('file://'+process.cwd()+'/pista-libre-v2.html');await p.waitForTimeout(2000);await p.evaluate(()=>document.getElementById('bNew').click());await p.waitForTimeout(1200);
+const r=await p.evaluate(()=>{const P=window.PL,G=P.G;G.money=3e6;const out=[];const L=(x)=>out.push(x&&x.why||(x&&x.ok?'ok':String(x)));
+ [46,49].forEach(x=>L(P.placeObj('checkin',x,31,0)));
+ L(P.placeObj('security',54,26,0));L(P.placeObj('claim',60,26,0));
+ L(P.placeObj('gate',49,17,0));L(P.placeObj('gate',58,17,0));
+ L(P.placeObj('standS',45,4,0));L(P.placeObj('standS',56,4,0));
+ [[46,20],[50,20],[54,20]].forEach(([x,y])=>L(P.placeObj('bench',x,y,0)));
+ L(P.placeObj('wc',62,18,0));L(P.placeObj('food',50,23,0));
+ if(window.BR){const st=G.objs.find(o=>o.k==='standS');L(P.buildBridge(st));}
+ G.offers.forEach(o=>P.acceptOffer(o.id));
+ return {out,objs:G.objs.map(o=>o.k+(o.lv>1?'@'+o.lv:'')+(o.bridge?'B':'')+':'+(o.ok?'ok':o.why)),lot:G.lot,exits:window.PL.G.up};});
+console.log(JSON.stringify(r));
+console.log(JSON.stringify(await p.evaluate(()=>{const P=window.PL,G=P.G;const all=[];for(let i=0;i<36000;i++){P.step(0.05);G.flights.forEach(f=>{if(!all.includes(f))all.push(f);});}return {st:G.stats,rat:Math.round(G.rating),fl:all.filter(f=>f.delay!==undefined).map(f=>[f.num,f.boarded+'/'+f.dep,f.missed,Math.round(f.delay)])};})));
+console.log('ERR',errs.slice(0,8));await b.close();})();

@@ -1,0 +1,22 @@
+const {chromium}=require('playwright');const fs=require('fs');
+(async()=>{const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium',args:['--use-gl=swiftshader','--enable-webgl']});
+const p=await b.newPage({viewport:{width:1300,height:850}});await p.addInitScript(()=>{let a=4242;Math.random=function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};});
+const errs=[];p.on('pageerror',e=>errs.push(e.message+' | '+(e.stack||'').split('\n').slice(1,4).join(' ')));p.on('console',m=>{if(m.type()==='error')errs.push('C:'+m.text())});
+await p.route(/three\.min\.js/,r=>r.fulfill({body:fs.readFileSync('lib/node_modules/three/build/three.min.js'),contentType:'application/javascript'}));
+await p.route(/OrbitControls\.js/,r=>r.fulfill({body:fs.readFileSync('lib/node_modules/three/examples/js/controls/OrbitControls.js'),contentType:'application/javascript'}));
+await p.route(/fonts\.googleapis/,r=>r.fulfill({body:'',contentType:'text/css'}));
+await p.goto('file://'+process.cwd()+'/pista-libre-v2.html');await p.waitForTimeout(2000);await p.evaluate(()=>document.getElementById('bNew').click());await p.waitForTimeout(1200);
+await p.screenshot({path:'w19a.png'});
+const r=await p.evaluate(()=>{const P=window.PL,G=P.G;G.money=9e6;G.star=4;G.up.ext=1;const out=[];
+ P.expandTerm(-1);P.expandTerm(1);[38,41,44,47].forEach(x=>P.placeObj('checkin',x,31,0));P.placeObj('security',50,26,0);P.placeObj('security',53,26,0);P.placeObj('claim',62,26,0);P.placeObj('claim',67,26,0);
+ [58,60,62,64].forEach(x=>P.placeObj('migration',x,21,0));P.placeObj('customs',64,31,0);P.placeObj('gate',42,19,0);P.placeObj('gate',52,19,0);P.placeObj('gate',66,19,0);
+ P.placeObj('standL',36,0,0);P.placeObj('standL',53,0,0);P.placeObj('standM',70,2,0);[[40,22],[44,22],[48,22],[52,22],[40,24],[44,24]].forEach(([x,y])=>P.placeObj('bench',x,y,0));
+ P.placeObj('wc',56,22,0);P.placeObj('food',46,26,0);P.placeObj('pasillo',60,16,0);P.placeObj('protocol',35,31,0);
+ G.objs.filter(o=>o.def.apron&&o.num!==3).forEach(s=>P.buildBridge(s));
+ ['fboBase','fboStands','fboHeli','fboHangar','fboHangar','fboLounge','fboLounge','fboCustoms','fboRwy','fboLink','fboApm','fboBus'].forEach(k=>out.push(k+':'+P.buyFbo(k)));
+ P.setSpeed(0);return out;});
+console.log(r.join(' '));
+for(let k=0;k<36;k++){const st=await p.evaluate(()=>{const P=window.PL,G=P.G;for(let i=0;i<700;i++){P.step(0.05);}if(G.offers.length)G.offers.forEach(o=>P.acceptOffer(o.id));return {t:Math.round(G.t),fb:P.fbs(),rat:Math.round(G.rating),fin:Math.round(G.fin['Aviación ejecutiva']||0),st:G.stats};});
+  await p.waitForTimeout(100);if(k%5==0)console.log(JSON.stringify(st));}
+console.log('PM',JSON.stringify(await p.evaluate(()=>window.PL.pm())));
+console.log('ERR',errs.slice(0,8));await b.close();})();

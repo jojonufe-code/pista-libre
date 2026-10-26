@@ -1,0 +1,25 @@
+const {chromium}=require('playwright');const fs=require('fs');
+(async()=>{const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium',args:['--use-gl=swiftshader','--enable-webgl']});
+const p=await b.newPage({viewport:{width:1300,height:850}});const errs=[];p.on('pageerror',e=>errs.push(e.message+' | '+(e.stack||'').split('\n').slice(1,3).join(' ')));
+await p.route(/three\.min\.js/,r=>r.fulfill({body:fs.readFileSync('lib/node_modules/three/build/three.min.js'),contentType:'application/javascript'}));
+await p.route(/OrbitControls\.js/,r=>r.fulfill({body:fs.readFileSync('lib/node_modules/three/examples/js/controls/OrbitControls.js'),contentType:'application/javascript'}));
+await p.route(/fonts\.googleapis/,r=>r.fulfill({body:'',contentType:'text/css'}));
+await p.goto('file://'+process.cwd()+'/pista-libre-v2.html');await p.waitForTimeout(2000);await p.evaluate(()=>document.getElementById('bNew').click());await p.waitForTimeout(1200);
+const r=await p.evaluate(()=>{const P=window.PL,G=P.G;G.money=3e6;G.star=3;const out=[];const L=(x,t)=>{if(!(x&&x.ok)&&x!==true)out.push(t+':'+(x&&x.why||x));};
+ [46,49].forEach(x=>L(P.placeObj('checkin',x,31,0),'ci'));L(P.placeObj('wrap',52,31,0),'wrap');L(P.placeObj('porter',55,33,0),'portD');L(P.placeObj('protocol',45,34,0),'proto');L(P.placeObj('news',50,34,0),'news');
+ L(P.placeObj('security',54,26,0),'sec');L(P.placeObj('claim',60,26,0),'claim');L(P.placeObj('customs',61,31,0),'cus');L(P.placeObj('porter',65,33,0),'portA');L(P.placeObj('rental',58,34,0),'rent');L(P.placeObj('exchange',63,34,0),'exch');
+ L(P.placeObj('gate',49,17,0),'gate');L(P.placeObj('gate',58,17,0),'gate2');L(P.placeObj('standS',45,4,0),'st');L(P.placeObj('standS',56,4,0),'st2');
+ [[46,20],[50,20],[54,20]].forEach(([x,y])=>L(P.placeObj('bench',x,y,0),'bench'));L(P.placeObj('wc',62,18,0),'wc');L(P.placeObj('lounge',44,23,0),'lounge');L(P.placeObj('food',50,23,0),'food');L(P.placeObj('migration',58,23,0),'mig');
+ L(P.placeObj('parking',44,43,0),'park');L(P.placeObj('parking',56,43,0),'park2');
+ G.offers.forEach(o=>P.acceptOffer(o.id));G.offers.push({id:G.seq++,a:3,type:'E190',intl:true,per:2,load:0.9,times:[600,800],est:0,exp:1e9});P.acceptOffer(G.offers[G.offers.length-1].id);
+ return {out,contracts:G.contracts.length,alerts:G.alerts.map(a=>a.t)};});
+console.log(JSON.stringify(r));
+const s=await p.evaluate(()=>{window.__dl=[];window.__ms=[];const P=window.PL,G=P.G;const m={};let maxV=0;for(let i=0;i<9000;i++){P.step(0.05);maxV=Math.max(maxV,G.veh.length);}
+  G.pax.forEach(q=>{m[q.mode]=(m[q.mode]||0)+1});return {ms:window.__ms,q:G.objs.filter(o=>o.queue&&o.queue.length).map(o=>o.k+':'+o.queue.length).join(' '),dl:window.__dl.slice(0,6),t:G.t,maxV,npc:G.npc.length,modes:m,fin:G.fin,st:G.stats,lots:G.objs.filter(o=>o.def.land).map(o=>o.occ)};});
+console.log(JSON.stringify(s));
+const shot=async(n,x,z,cx,cy,cz)=>{await p.evaluate(([x,z,cx,cy,cz])=>{const P=window.PL;P.controls.target.set(x,0,z);P.camera.position.set(cx,cy,cz);P.controls.update();},[x,z,cx,cy,cz]);await p.waitForTimeout(1500);await p.screenshot({path:n});};
+await shot('z1.png',450,280,450+180,200,280+300);
+await shot('z2.png',470,250,470+70,80,250+110);
+await shot('z3.png',380,200,380+60,70,200+90);
+console.log(JSON.stringify(await p.evaluate(()=>window.PL.info())));
+console.log('ERR',errs.slice(0,8));await b.close();})();
