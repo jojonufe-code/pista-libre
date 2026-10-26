@@ -540,7 +540,7 @@ function updPlane(p,dt){
     case 'approach':{p.x-=p.spd*dt;p.alt=Math.max(0,(p.x-TD_X)/(APP_X-TD_X)*APP_ALT);
       if(p.x<=TD_X+(G.up.ils?160:40)&&!p.cleared&&G.up.ils&&G.rwy&&G.rwy!==p&&p.spd>62){p.spd=Math.max(62,p.spd-40*dt);}
       if(p.x<=TD_X+40&&!p.cleared){if(G.rwy&&G.rwy!==p){p.state='goaround';toast(f.num+' sube y da otra vuelta: pista ocupada','bad');break;}G.rwy=p;p.cleared=true;}
-      if(p.alt<=0){p.state='roll';p.rev=2.2;earn('Aterrizajes',Math.round(f.T.fee*(f.intl?1.3:1)));pop3(p.x,RWY_Z,'+'+fmt$(f.T.fee*(f.intl?1.3:1)));sfx('jet');
+      if(p.alt<=0){p.state='roll';gfxTouch(p);p.rev=2.2;earn('Aterrizajes',Math.round(f.T.fee*(f.intl?1.3:1)));pop3(p.x,RWY_Z,'+'+fmt$(f.T.fee*(f.intl?1.3:1)));sfx('jet');
         for(let i=0;i<6;i++)G.fx.push({x:p.x+R(-6,6),y:p.z+R(-12,12),h:1,r:R(3,6),t:0,life:R(0.8,1.6),c:'#e8e8e8'});}break;}
     case 'goaround':p.x-=p.spd*dt;p.alt=Math.min(260,p.alt+dt*14);if(p.x<-500){G.planes=G.planes.filter(q=>q!==p);f.plane=null;f.state='sched';f.ga=(f.ga||0)+1;}break;
     case 'roll':{const ex2=G.up.rapid?55:TAXI;p.spd=Math.max(ex2,p.spd-(G.up.rapid?40:30)*dt);p.x-=p.spd*dt;if(p.rev>0){p.rev-=dt;if(Math.random()<dt*20)G.fx.push({x:p.x+18,y:p.z+R(-14,14),h:1.5,r:R(2,4),t:0,life:0.9,c:'#dfe6ea'});}

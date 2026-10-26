@@ -151,7 +151,8 @@ function standDetail(x,s,X0,Z0,w,h){const B=s.bottom,cx=s.cx;
 /* rugosidad: pisos interiores pulidos, plataforma y pistas mates */
 function drawRough(){const x=rcan.getContext('2d');x.setTransform(1,0,0,1,0,0);x.fillStyle='rgb(240,240,240)';x.fillRect(0,0,rcan.width,rcan.height);x.setTransform(RGU,0,0,RGU,-SITE.x0*RGU,-SITE.z0*RGU);
   const lx0=G.lot.x0*CELL,lx1=(G.lot.x1+1)*CELL;x.fillStyle='rgb(205,205,205)';x.fillRect(lx0-12,TWY_Z+12,lx1-lx0+24,APR*CELL-TWY_Z-12);
-  x.fillStyle='rgb(215,215,215)';x.fillRect(-90,RWY_Z-23,THR_X+90,46);
+  x.fillStyle='rgb(215,215,215)';x.fillRect(-90,RWY_Z-23,THR_X+90,46);if(G.up&&G.up.rwy2)x.fillRect(-90,RWY2_Z-23,THR_X+90,46);
+  x.fillStyle='rgb(212,212,212)';x.fillRect(-90,TWY2_Z-14,THR_X+90,TWY_Z-TWY2_Z+28);x.fillRect(-240,GH*CELL+2,1480,52);
   for(let y=APR;y<GH;y++)for(let gx=0;gx<GW;gx++){const v=G.floor[cidx(gx,y)];if(!v)continue;x.fillStyle=v===2?'rgb(92,92,92)':'rgb(112,112,112)';x.fillRect(gx*CELL,y*CELL,CELL,CELL);}
   x.fillStyle='rgb(140,140,140)';for(let y=APR;y<GH;y++)for(let gx=0;gx<GW;gx++){if(!G.floor[cidx(gx,y)])continue;x.fillRect(gx*CELL,y*CELL,CELL,0.5);x.fillRect(gx*CELL,y*CELL,0.5,CELL);}
   rtex.needsUpdate=true;}
@@ -170,11 +171,11 @@ function bake(root){root.updateMatrixWorld(true);const groups=new Map();
   root.traverse(o=>{if(!o.isMesh||o.isInstancedMesh)return;for(let q=o.parent;q;q=q.parent)if(q.userData.nobake)return;if(o.geometry!==BOXG&&o.geometry!==CYLG&&o.geometry!==SPHG)return;const k=o.geometry.uuid+'|'+o.material.uuid+'|'+o.castShadow;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(o);});
   groups.forEach(list=>{const im=new TH.InstancedMesh(list[0].geometry,list[0].material,list.length);list.forEach((o,i)=>{im.setMatrixAt(i,o.matrixWorld);o.parent.remove(o);});im.castShadow=list[0].castShadow;im.receiveShadow=true;root.add(im);});}
 function gbox(w,h,d,c,x,y,z,par,o){const m=box(w,h,d,c,x,y,z,par,o);if(c===GLASS||(o&&o.transparent))m.castShadow=false;return m;}
-function sign(text,x,y,z,par,bg,fg,hgt){const {t,ar}=textTex(text,bg||'#ffc629',fg||'#141414',64);const m=new TH.Mesh(new TH.PlaneGeometry(hgt*ar,hgt),new TH.MeshBasicMaterial({map:t,side:TH.DoubleSide,toneMapped:false}));m.material.userData.own=true;m.position.set(x,y,z);par.add(m);return m;}
+function sign(text,x,y,z,par,bg,fg,hgt){const {t,ar}=textTex(text,bg||'#ffc629',fg||'#141414',64);const m=new TH.Mesh(new TH.PlaneGeometry(hgt*ar,hgt),new TH.MeshBasicMaterial({map:t,side:TH.DoubleSide,toneMapped:false}));m.material.color=SIGNC;m.material.userData.own=true;m.position.set(x,y,z);par.add(m);return m;}
 let GHOST=false;
 function staffAt(o,lx,lz,lh,shirt,cap,sit,vest){if(GHOST)return;const [x,z]=l2w(o,lx,lz);STAFF.push({x,z,h:lh+o.a,lk:staffLook(o.id*7+Math.round(lx*3+lz),shirt,cap,vest),sit});}
 function buildWorld(){
-  scene.remove(OBJG);disposeGroup(OBJG);OBJG=new TH.Group();scene.add(OBJG);STAFF=[];
+  scene.remove(OBJG);disposeGroup(OBJG);OBJG=new TH.Group();scene.add(OBJG);STAFF=[];fidsReset();
   drawSite();drawZones();
   const W=OBJG;
   // paredes automáticas
@@ -261,7 +262,7 @@ function buildObj(o,g){
       B(0.5,2.2,0.5,'#59636c',-3.4,0,z1+3.4);B(0.5,2.2,0.5,'#59636c',3.4,0,z1+3.4);B(1.6,0.9,0.3,'#14311f',3.4,2.2,z1+3.4);
       sign('⬇ LLEGADAS · RECOGIDA',0,Y+4.4,z0+0.6,g,'#14311f','#7fe0a0',1.3);break;}
     case 'checkin':
-      B(16,13,0.8,'#2b3a4a',0,0,-3.4);sign('CHECK-IN',0,10.6,-2.9,g,'#ffc629','#141414',3.4);
+      B(16,13,0.8,'#2b3a4a',0,0,-3.4);sign('CHECK-IN',0,11.3,-2.9,g,'#ffc629','#141414',3.4);if(!GHOST)fidsMesh(FIDS.dep.m,5.8,3.6,0,7.4,-2.82,g);
       B(13,4.6,3.2,'#8f979e',0,0,1.4);B(13.4,0.5,3.6,'#dfe3e6',0,4.6,1.4);B(3.6,1,3.6,'#3a3f45',5.4,0,3.4);B(2.6,1.2,6,'#2f343a',5.6,0,-0.8);
       B(3.2,2.4,0.3,'#15191d',-3,5.1,0.6);B(2.8,2,0.1,'#3aa0ff',-3,5.3,0.8,{emissive:col('#1a6fd0'),emissiveIntensity:.8});
       staffAt(o,-1,-1.4,H2,STAFFC.checkin);break;
@@ -284,10 +285,10 @@ function buildObj(o,g){
       const geo=new TH.ExtrudeGeometry(sh,{depth:3.2,bevelEnabled:false,curveSegments:14});geo.rotateX(H2);const m=new TH.Mesh(geo,mat('#8f989f',{metalness:.4,roughness:.4}));m.position.y=3.2;m.castShadow=m.receiveShadow=true;g.add(m);
       const sh2=new TH.Shape();rrs(sh2,-13.4,-4.4,26.8,8.8,4.4);const h2=new TH.Path();rrs(h2,-11.2,-2.2,22.4,4.4,2.2);sh2.holes.push(h2);const g2=new TH.ExtrudeGeometry(sh2,{depth:0.3,bevelEnabled:false,curveSegments:14});g2.rotateX(H2);const m2=new TH.Mesh(g2,mat('#2f353a'));m2.position.y=3.5;g.add(m2);
       B(21,4.2,3,'#59636c',0,0,0);B(3,4,6,'#575f65',0,0,-6.5);
-      B(0.6,13,0.6,'#59636c',-13,0,6.6);sign('EQUIPAJE',-13,13,6.6,g,'#1d3a52','#ffffff',2.6);staffAt(o,13.4,-6.6,Math.PI,STAFFC.claim,null,false,true);break;}
+      B(0.6,13,0.6,'#59636c',-13,0,6.6);sign('EQUIPAJE',-13,13,6.6,g,'#1d3a52','#ffffff',2.6);if(!GHOST){B(0.5,7,0.5,'#59636c',13,0,6.4);fidsMesh(FIDS.arr.m,6.4,4,13,9,6.85,g);}staffAt(o,13.4,-6.6,Math.PI,STAFFC.claim,null,false,true);break;}
     case 'gate':
       B(6,4.4,2.6,'#3a3f45',0,0,0.6);B(6.3,0.4,2.9,'#d0d6db',0,4.4,0.6);B(2.4,1.8,0.2,'#3aa0ff',-1.5,4.8,-0.4,{emissive:col('#1a6fd0'),emissiveIntensity:.8});
-      B(0.6,15,0.6,'#59636c',-3.4,0,-3.4);sign('PUERTA '+(o.stand?o.stand.num:'?'),-0.6,13.6,-3.3,g,o.stand?'#ffc629':'#ff5a5f','#141414',3.2);
+      B(0.6,15,0.6,'#59636c',-3.4,0,-3.4);sign('PUERTA '+(o.stand?o.stand.num:'?'),-0.6,13.6,-3.3,g,o.stand?'#ffc629':'#ff5a5f','#141414',3.2);if(!GHOST)fidsMesh(fidsGate(o),4.8,2.4,-0.6,9.9,-3.15,g);
       staffAt(o,0.6,-1.6,H2,STAFFC.gate);break;
     case 'bench':
       B(15.6,0.6,3.2,'#59636c',0,2.1,0.4);[-6,-2,2,6].forEach(x=>{B(3.4,0.8,3.2,'#2f3b4b',x,2.6,0.4);B(3.4,4.2,0.7,'#252e3a',x,2.6,-1.5);});B(0.6,2.2,2.6,'#59636c',-7.4,0,0.4);B(0.6,2.2,2.6,'#59636c',7.4,0,0.4);break;
@@ -546,7 +547,7 @@ function syncPlanes(dt){
     const bl=Math.floor(performance.now()/500)%2===0;g.userData.bea.visible=p.engines&&bl;if(g.userData.bea2)g.userData.bea2.visible=p.engines&&!bl;
     if(g.userData.strobes){const on=p.state!=='parked'&&p.state!=='push'&&(performance.now()%1100)<90;g.userData.strobes.forEach(x=>x.visible=on);}g.userData.ll.visible=['approach','roll','takeoff','lineup','taxiIn','taxiOut'].includes(p.state);
     if(g.userData.props)g.userData.props.forEach(pr=>{pr.rotation.x+=p.engines?dt*50:dt*2;});}
-  for(const [id,g] of P3){if(!seen.has(id)){scene.remove(g);g.traverse(o=>{if(o.geometry&&![BOXG,CYLG,SPHG].includes(o.geometry))o.geometry.dispose();});g.userData.bodyM.map.dispose();g.userData.bodyM.dispose();if(g.userData.finM){g.userData.finM.map.dispose();g.userData.finM.dispose();}P3.delete(id);}}
+  for(const [id,g] of P3){if(!seen.has(id)){scene.remove(g);g.traverse(o=>{if(o.geometry&&![BOXG,CYLG,SPHG].includes(o.geometry))o.geometry.dispose();});g.userData.bodyM.map.dispose();g.userData.bodyM.dispose();if(g.userData.aoM)g.userData.aoM.dispose();if(g.userData.finM){g.userData.finM.map.dispose();g.userData.finM.dispose();}P3.delete(id);}}
 }
 
 /* ---- entorno ---- */
@@ -629,7 +630,7 @@ function render3D(dt){
   if(TRUSS)TRUSS.visible=camera.position.distanceTo(controls.target)>330;
   if(FBROOF)FBROOF.visible=camera.position.distanceTo(controls.target)>430;
   updGSE(dt);syncPlanes(dt);syncBridges(dt);syncFx();updEnv(dt);
-  renderer.render(scene,camera);
+  gfxFrame(dt);gfxRender();
   syncOverlay(dt);
 }
 const H2b=Math.PI/2;

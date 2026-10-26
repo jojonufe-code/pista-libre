@@ -120,6 +120,11 @@ function liveryTex(a,reg){const c=document.createElement('canvas');c.width=512;c
   [0,1].forEach(sd=>{const u=U(sd,14);x.fillStyle=wc;for(let y=260;y<1720;y+=26){if(Math.abs(y-560)<30||Math.abs(y-1500)<30)continue;x.fillRect(u-7,y,14,12);}
     x.strokeStyle=st==='full'?shade(a.c1,-50):'#9aa3aa';x.lineWidth=3;[[540,92],[1480,92],[230,92]].forEach(([y,h])=>x.strokeRect(u-14,y,28,h));
     x.fillStyle='#101a24';x.fillRect(U(sd,30)-16,60,32,40);});
+  // líneas de paneles, puertas de carga y salidas sobre el ala
+  x.strokeStyle='rgba(0,0,0,.09)';x.lineWidth=1.2;for(let y=120;y<1960;y+=86){x.beginPath();x.moveTo(0,y);x.lineTo(512,y);x.stroke();}
+  x.strokeStyle='rgba(0,0,0,.06)';[0,1].forEach(sd=>[-62,-28,42,70].forEach(dg=>{const u=U(sd,dg);x.beginPath();x.moveTo(u,90);x.lineTo(u,1980);x.stroke();}));
+  x.strokeStyle='rgba(0,0,0,.2)';x.lineWidth=2;[0,1].forEach(sd=>{x.strokeRect(U(sd,-36)-18,640,36,110);x.strokeRect(U(sd,-36)-18,1310,36,96);x.strokeRect(U(sd,14)-11,1010,22,50);x.strokeRect(U(sd,14)-11,1090,22,50);});
+  x.fillStyle='rgba(255,255,255,.18)';for(let y=200;y<1900;y+=43){x.fillRect(U(0,64),y,2,2);x.fillRect(U(1,64),y,2,2);}
   // nombre de la aerolínea y matrícula
   const tcol=st==='full'?a.c2:st==='tail'?a.c1:a.c3==='#1b1b1b'?a.c1:a.c3;
   [0,1].forEach(sd=>{const u=U(sd,32);x.save();x.translate(u,980);x.rotate(sd?Math.PI/2:-Math.PI/2);x.font='700 74px "Barlow Condensed", sans-serif';x.fillStyle=tcol;x.textAlign='center';x.textBaseline='middle';x.fillText(a.name.toUpperCase(),0,0);x.restore();
@@ -204,7 +209,7 @@ function mergeByMat(root,par,skip){root.updateMatrixWorld(true);const inv=new TH
     const mm=new TH.Mesh(bg,list[0].material);mm.castShadow=true;mm.receiveShadow=true;root.add(mm);});}
 function makePlane(p){
   const T=p.T,L=T.len*PSCALE,S=T.span*PSCALE,R=Math.max(1.8,L*0.058),g=new TH.Group();g.rotation.order='YZX';
-  const bodyM=new TH.MeshStandardMaterial({map:liveryTex(p.a,p.reg),roughness:.28,metalness:.22});
+  const bodyM=GFX.q>=2?new TH.MeshPhysicalMaterial({map:liveryTex(p.a,p.reg),roughness:.3,metalness:.24,clearcoat:.75,clearcoatRoughness:.08,envMapIntensity:1.1}):new TH.MeshStandardMaterial({map:liveryTex(p.a,p.reg),roughness:.26,metalness:.26,envMapIntensity:1.15});
   if(!LIV['fin'+p.a.code])LIV['fin'+p.a.code]=finTex(p.a);
   const wingM=mat('#cfd5da',{metalness:.38,roughness:.4}),wingD=mat('#aeb6bd',{metalness:.4,roughness:.45}),c1=mat(p.a.c1,{roughness:.42}),dark=mat('#1d2329',{metalness:.4,roughness:.5}),metal=mat('#c9ced3',{metalness:.85,roughness:.22}),tire=mat('#161616',{roughness:.9}),glassM=mat('#0d1822',{roughness:.08,metalness:.6});
   const add=(geo,m,x,y,z,par)=>{const o=new TH.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;(par||g).add(o);return o;};
@@ -270,7 +275,7 @@ function makePlane(p){
   const ll=new TH.Mesh(new TH.SphereGeometry(0.6,8,6),new TH.MeshBasicMaterial({color:0xffffff}));ll.position.set(L*0.44,-R*0.6,0);g.add(ll);
   {const sp=(m,s0)=>{const q=new TH.Sprite(m);q.scale.set(s0,s0,1);return q;};bea.add(sp(GL_RED,9));bea2.add(sp(GL_RED,8));ll.add(sp(GL_WHT,22));}
   mergeByMat(g,g,new Set([gear,...g.userData.props]));mergeByMat(gear,gear,new Set());
-  g.userData.R=R;g.userData.L=L;g.userData.S=S;g.userData.bea=bea;g.userData.bea2=bea2;g.userData.ll=ll;g.userData.gear=gear;g.userData.bodyM=bodyM;g.userData.eng=[[wx-sw*0.35-L*0.08,T.prop?R*0.7:-R*0.95,S*(T.prop?0.22:0.27)],[wx-sw*0.35-L*0.08,T.prop?R*0.7:-R*0.95,-S*(T.prop?0.22:0.27)]];
+  g.userData.tip=[wx-sw-L*0.02,wy+0.6,S/2];g.userData.R=R;g.userData.L=L;g.userData.S=S;g.userData.bea=bea;g.userData.bea2=bea2;g.userData.ll=ll;g.userData.gear=gear;g.userData.bodyM=bodyM;g.userData.eng=[[wx-sw*0.35-L*0.08,T.prop?R*0.7:-R*0.95,S*(T.prop?0.22:0.27)],[wx-sw*0.35-L*0.08,T.prop?R*0.7:-R*0.95,-S*(T.prop?0.22:0.27)]];
   scene.add(g);return g;
 }
 /* ---- humo, polvo y spray ---- */
@@ -332,7 +337,7 @@ const RAIN_N=3000,rainGeo=new TH.BufferGeometry(),rainPos=new Float32Array(RAIN_
 for(let i=0;i<RAIN_N;i++){const x=R(-500,500),y=R(0,400),z=R(-500,500);rainPos.set([x,y,z,x-1,y-9,z],i*6);}
 rainGeo.setAttribute('position',new TH.BufferAttribute(rainPos,3));
 const rain=new TH.LineSegments(rainGeo,new TH.LineBasicMaterial({color:0xc8d8ec,transparent:true,opacity:.45}));rain.frustumCulled=false;scene.add(rain);
-function signMesh(text,x,y,z,bg,fg,hgt,par,face){const {t,ar}=textTex(text,bg||'#ffc629',fg||'#141414',64);const m=new TH.Mesh(new TH.PlaneGeometry(hgt*ar,hgt),new TH.MeshBasicMaterial({map:t,side:TH.DoubleSide,toneMapped:false}));m.material.userData.own=true;m.position.set(x,y,z);if(face)m.rotation.y=face;(par||scene).add(m);return m;}
+function signMesh(text,x,y,z,bg,fg,hgt,par,face){const {t,ar}=textTex(text,bg||'#ffc629',fg||'#141414',64);const m=new TH.Mesh(new TH.PlaneGeometry(hgt*ar,hgt),new TH.MeshBasicMaterial({map:t,side:TH.DoubleSide,toneMapped:false}));m.material.color=SIGNC;m.material.userData.own=true;m.position.set(x,y,z);if(face)m.rotation.y=face;(par||scene).add(m);return m;}
 /* ---- ciudad alrededor (solo visual) ---- */
 let CITY=null,CITYWATER=null;
 function buildCity(){
