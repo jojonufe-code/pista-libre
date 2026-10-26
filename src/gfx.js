@@ -149,7 +149,7 @@ function updWeather(rdt,gdt){
   WX.r+=(WX.tgt-WX.r)*Math.min(1,rdt*0.18);if(Math.abs(WX.r-WX.tgt)<0.002)WX.r=WX.tgt;
   if(WX.r>0.08)WX.wet=Math.min(1,WX.wet+Math.max(gdt/9,rdt*0.06)*WX.r);else WX.wet=Math.max(0,WX.wet-gdt/110);
   WX.fT-=rdt;if(WX.r>0.85&&WX.fT<=0){WX.flash=1;WX.fT=RG(16,40);}WX.flash=Math.max(0,WX.flash-rdt*3);
-  if(typeof AMB!=='undefined'&&AMB&&AC){try{AMB.rain.gain.setTargetAtTime(G.sound?WX.r*0.2:0,AC.currentTime,0.4);AMB.wind.gain.setTargetAtTime(G.sound?0.03+WX.r*0.08:0,AC.currentTime,0.6);}catch(e){}}}
+}
 function setWeather(m){WX.mode=m;try{localStorage.setItem('pl_wx',m);}catch(e){}if(m==='auto')WX.next=G.t+RG(30,200);}
 
 /* ---- lluvia en GPU: gotas ancladas al mundo alrededor de la cámara ---- */
@@ -228,7 +228,8 @@ const PST=new Map();
 function planeFX(dt){if(!(dt>0))return;const rn=WX.r,wet=WX.wet,humid=Math.max(rn,duskAmt()*0.5,nightFactor()*0.35);
   for(const p of G.planes){const g=P3.get(p.id);if(!g)continue;const ud=g.userData,L=ud.L,S=ud.S,R0=ud.R,alt=p.alt||0,sp=p.spd||0;
     if(!ud.ao){const m=new TH.Mesh(new TH.PlaneGeometry(1,1),new TH.MeshBasicMaterial({map:AOT,transparent:true,depthWrite:false,opacity:.5,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-8}));m.rotation.x=-Math.PI/2;m.scale.set(L*1.08,S*1.04,1);m.renderOrder=1;g.add(m);ud.ao=m;ud.aoM=m.material;}
-    ud.ao.position.y=-(R0+2.6+alt)+0.3;ud.ao.visible=alt<60;ud.aoM.opacity=(0.34+rn*0.3)*Math.max(0,1-alt/50);
+    ud.ao.position.y=-(R0+2.6+alt)+0.3;
+    if(ud.fanD){const tw=p.engines?(p.state==='takeoff'?46:p.state==='approach'||p.state==='roll'?30:14):0;ud.fw=(ud.fw||0)+(tw-(ud.fw||0))*Math.min(1,dt*(tw>(ud.fw||0)?0.8:0.25));if(ud.fw>0.01)ud.fanD.forEach(f=>f.rotation.z+=ud.fw*dt);}ud.ao.visible=alt<60;ud.aoM.opacity=(0.34+rn*0.3)*Math.max(0,1-alt/50);
     const s=PST.get(p.id)||{st:p.state,alt};g.updateMatrixWorld();
     const loc=(x,y,z)=>g.localToWorld(_v1.set(x,y,z));const fx=Math.cos(p.hdg),fz=Math.sin(p.hdg);
     const gx=-L*0.07,gy=-(R0+2.6)+0.6;
@@ -245,7 +246,7 @@ function planeFX(dt){if(!(dt>0))return;const rn=WX.r,wet=WX.wet,humid=Math.max(r
 
 function gfxTouch(p){try{const g=P3.get(p.id),L=g?g.userData.L:p.T.len*PSCALE,R0=g?g.userData.R:Math.max(1.8,L*0.058),sp=p.spd||100,fx=Math.cos(p.hdg),fz=Math.sin(p.hdg);
   for(const sg of [-1,1]){const x=p.x-fx*L*0.07,z=p.z+sg*R0*0.95;for(let k=0;k<16;k++)emit(x+RG(-2,2),RG(0.4,2),z+RG(-1.5,1.5),fx*sp*0.2+RG(-4,4),RG(1,5),fz*sp*0.2+RG(-4,4),RG(3,6),RG(5,9),RG(1.6,3.2),0.55,0.86,0.86,0.86,0.9);
-    if(Math.abs(z-RWY_Z)<RUB.h/2)rubberMark(x,z,RG(28,60),2.6);}}catch(e){}}
+    if(sg>0)auTouch(x,z);if(Math.abs(z-RWY_Z)<RUB.h/2)rubberMark(x,z,RG(28,60),2.6);}}catch(e){}}
 /* ---- pantallas de vuelos (FIDS) y letreros iluminados ---- */
 const SIGNC=new TH.Color(1,1,1),SCRC=new TH.Color(1,1,1);
 function mkBoard(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;const t=new TH.CanvasTexture(c);t.encoding=TH.sRGBEncoding;t.anisotropy=4;const m=new TH.MeshBasicMaterial({map:t,toneMapped:false});m.color=SCRC;return{c,t,m};}
@@ -314,7 +315,7 @@ function gfxFrame(dt){
   SIGNC.setScalar(1+n*0.55);SCRC.setScalar(0.92+n*0.45);if(PM.lit)PM.lit.material.color.setScalar(1+n*1.6);
   // partículas
   PU.uScale.value=renderer.domElement.height*0.5/Math.tan(camera.fov*Math.PI/360);PU.uL.value.setScalar(0.3+0.7*(1-n)*(1-r*0.25)+WX.flash*0.5);
-  if(!titleOnSafe())planeFX(dt);updParticles(dt);updFIDS(rdt);cineUpd(rdt);nearFit();
+  if(!titleOnSafe())planeFX(dt);updParticles(dt);updFIDS(rdt);cineUpd(rdt);nearFit();audUpd(rdt);
   perfWatch(rdt);}
 /* plano cercano dinámico: más precisión de profundidad (evita parpadeo del suelo en tabletas y teléfonos) */
 function nearFit(){const d=camera.position.distanceTo(controls.target),nr=clamp(Math.min(d,camera.position.y*1.5)*0.02,1,30);if(Math.abs(nr-camera.near)>camera.near*0.08){camera.near=nr;camera.updateProjectionMatrix();}}

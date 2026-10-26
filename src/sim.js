@@ -25,6 +25,7 @@ const DEF={
   upRapid:{n:'Salidas rápidas',ic:'↘️',cost:60000,act:1,up:'rapid',star:2,cat:'p',d:'Calles de salida en ángulo: los aviones dejan la pista antes y aterrizan más seguido.'},
   upIls:{n:'ILS y luces',ic:'🛬',cost:45000,act:1,up:'ils',cat:'p',d:'Luces de aproximación, PAPI y localizador: menos aproximaciones frustradas.'},
   upExt:{n:'Extender pista',ic:'📏',cost:150000,act:1,up:'ext',star:3,cat:'p',d:'Pista 240 m más larga. Necesaria para el Boeing 787.'},
+  upF2:{n:'Segundo piso',ic:'🏢',cost:180000,act:1,up:'f2',star:2,cat:'t',d:'Mezzanine sobre la sala de embarque con patio de comidas y mirador a la plataforma. Los pasajeros con tiempo suben por escaleras mecánicas: más ventas y satisfacción.'},
   upRwy2:{n:'Segunda pista',ic:'🛫',cost:260000,act:1,up:'rwy2',star:4,cat:'p',d:'Pista paralela solo para despegues: las llegadas ya no esperan a las salidas.'},
   checkin:{n:'Check-in',ic:'🧳',cost:6000,w:2,h:1,zone:1,svc:2.2,srv:1,staff:10,cat:'s',d:'Documenta maletas. Va en el hall de salidas; la fila se forma al frente.'},
   security:{n:'Seguridad',ic:'🛡️',cost:22000,w:2,h:3,zone:1,exitZone:2,svc:1.6,srv:1,staff:25,cat:'s',d:'Frente al hall de salidas, espalda a la sala estéril. Es la única forma de pasar.'},
@@ -52,6 +53,7 @@ const DEF={
   fboStands:{n:'Puestos de jets +2',ic:'🛬',cost:90000,act:1,fbo:'st',cat:'e',d:'Dos puestos más en la plataforma ejecutiva (hasta 8).'},
   fboHeli:{n:'Helipuerto',ic:'🚁',cost:95000,act:1,fbo:'heli',cat:'e',d:'Nivel 1: dos helipuertos con luces. Nivel 2: cuatro helipuertos y más vuelos en helicóptero.'},
   fboHangar:{n:'Hangar ejecutivo',ic:'🏗️',cost:120000,act:1,fbo:'hang',cat:'e',d:'Hangar para jets que pernoctan: cobra estacionamiento y mantenimiento (hasta 2).'},
+  fboF2:{n:'Segundo piso FBO',ic:'🏢',cost:160000,act:1,fbo:'f2',cat:'e',d:'Sky lounge en el segundo piso: bar, sofás y terraza con vista a los jets. Los VIP suben por la escalera y la sala deja 20% más.'},
   fboLounge:{n:'Sala FBO premium',ic:'🥂',cost:140000,act:1,fbo:'lv',cat:'e',d:'Mejora la terminal: piscina y bar (nivel 2), spa y suites (nivel 3). Más ingresos por pasajero.'},
   fboCustoms:{n:'Aduana privada',ic:'🛂',cost:70000,act:1,fbo:'cus',cat:'e',d:'Migración y aduana dentro del FBO: llegan vuelos privados internacionales con tarifa más alta.'},
   fboRwy:{n:'Mejorar pista ejecutiva',ic:'📏',cost:160000,act:1,fbo:'rwy',cat:'e',d:'Nivel 1: 240 m más (Global 7500). Nivel 2: ILS, luces de aproximación, eje y PAPI (más tráfico). Nivel 3: pista ancha ranurada para el Boeing Business Jet.'},
@@ -347,6 +349,33 @@ function spawnArr(f){
     line(p,[d[0]+R(-3,3),d[1]+(g&&g.cz>d[1]?6:-6)],()=>line(p,[rx,rz-10],()=>line(p,[rx,rz,0],()=>corridorWalk(p,rx,e))));return;}
   if(f.stand&&f.stand.bridge){const be=bridgeIn(f.stand,pl);p.x=be[0];p.z=be[1];line(p,tgt,()=>nextStep(p));return;}line(p,[d[0]+R(-3,3),d[1]+(g&&g.cz>d[1]?6:-6)],()=>line(p,tgt,()=>nextStep(p)));
 }
+
+/* ---------- segundo piso (mezzanine) sobre la sala de embarque ---------- */
+const F2Y=19,F2K=[['CAFÉ','#6d4c41'],['SUSHI','#c0392b'],['BURGER','#d35400'],['PIZZA','#1f9e6a'],['HELADOS','#8e44ad'],['BAR','#2c3e50']];
+let F2={key:'',ok:false,esc:[],spots:[],tables:[],kiosk:[],occ:new Map()};
+function f2Get(){const k=(G.up.f2?1:0)+'|'+G.navVer+'|'+G.tx0+'|'+G.tx1;if(F2.key===k)return F2;F2={key:k,ok:false,esc:[],spots:[],tables:[],kiosk:[],occ:new Map()};if(!G.up.f2)return F2;
+  const X0=G.tx0*CELL+6,X1=(G.tx1+1)*CELL-6,ZA=APR*CELL+1,ZB=APR*CELL+23,row=APR+3;
+  const cand=[];for(let gx=G.tx0+1;gx<=G.tx1-6;gx++){let ok=true;for(let d=-1;d<6;d++){const c=cidx(gx+d,row);if(G.floor[c]!==2||G.cobj[c]){ok=false;break;}}if(ok)cand.push(gx);}
+  const want=X1-X0>360?[0.28,0.72]:[0.5],used=[];
+  for(const u of want){const tx=G.tx0+(G.tx1-G.tx0)*u;let b=null,bd=1e9;for(const g of cand){if(used.some(q=>Math.abs(q-g)<9))continue;const d=Math.abs(g-tx);if(d<bd){bd=d;b=g;}}if(b!=null)used.push(b);}
+  F2.esc=used.map(gx=>({x0:gx*CELL+2,x1:gx*CELL+36,zu:ZB+2.2,zd:ZB+5.8,foot:cidx(gx-1,row)}));
+  const near=X=>F2.esc.some(e=>X>e.x0+20&&X<e.x1+14);
+  let ki=0;for(let X=X0+28;X<X1-20;X+=118){if(near(X))continue;F2.kiosk.push({x:X,n:F2K[ki%F2K.length][0],c:F2K[ki%F2K.length][1]});ki++;}
+  const nk=X=>F2.kiosk.some(q=>Math.abs(q.x-X)<11);
+  for(let X=X0+10;X<X1-8;X+=16){if(near(X)||nk(X))continue;const Z=ZA+13;F2.tables.push([X,Z]);F2.spots.push([X-2.6,Z,0,true],[X+2.6,Z,Math.PI,true],[X,Z-2.6,Math.PI/2,true],[X,Z+2.6,-Math.PI/2,true]);}
+  for(let X=X0+6;X<X1-6;X+=8){if(!nk(X))F2.spots.push([X,ZA+2.4,-Math.PI/2,false]);if(!near(X+3))F2.spots.push([X+3,ZB-1.6,Math.PI/2,false]);}
+  F2.ok=F2.esc.length>0;return F2;}
+function f2Try(p){if(!G.up.f2||p.f2try||!p.dep)return false;p.f2try=1;const f=p.f;if(f.std-G.t<60||f.boardOpen||Math.random()>0.42)return false;const L=f2Get();if(!L.ok)return false;
+  const pc=cellAt(p.x,p.z);let e=null,bd=INF;for(const q of L.esc){const fl=field(p.zone,q.foot);if(pc<0||fl[pc]>=INF)continue;if(fl[pc]<bd){bd=fl[pc];e=q;}}if(!e)return false;
+  const n=L.spots.length;if(!n)return false;let si=-1;const o0=Math.floor(Math.random()*n);for(let k=0;k<n;k++){const i=(o0+k)%n,q=L.occ.get(i);if(!q||q.gone||q.f2s!==i){si=i;break;}}if(si<0)return false;
+  L.occ.set(si,p);p.f2s=si;p.f2e=e;p.f2L=L;p.sub='toF2';p.mode='nav';p.tgt=e.foot;p.o=null;return true;}
+function f2Up(p){const e=p.f2e,sp=p.f2L&&p.f2L.spots[p.f2s];if(!e||!sp){p.sub=null;return gateLogic(p);}
+  line(p,[e.x0-1,e.zu],()=>{p.ride=true;p.lspd=p.spd*0.7;line(p,[e.x1,e.zu,F2Y],()=>{p.ride=false;p.lspd=null;p.f2=true;
+    line(p,[e.x1+4,e.zu-4,F2Y],()=>line(p,[sp[0],sp[1],F2Y],()=>{p.mode='f2';p.sit=sp[3];p.hdg=sp[2];p.chk=R(14,36);p.sub=null;
+      const v=Math.round(R(8,20)*(p.vip||p.prem?1.6:1));earn('Comercios',v);if(Math.random()<0.25)pop3(sp[0],sp[1],'+$'+v);p.pen=Math.max(0,p.pen-6);if(Math.random()<0.55)p.pose=p.lk.phone&&Math.random()<0.5?'phone':sp[3]?'drink':null;}));});});}
+function f2Down(p){const e=p.f2e,L=p.f2L;if(L&&L.occ.get(p.f2s)===p)L.occ.delete(p.f2s);p.sit=false;p.pose=null;
+  if(!e){p.el=0;p.f2=false;gateLogic(p);return;}
+  line(p,[e.x1+4,e.zd-4,F2Y],()=>line(p,[e.x1,e.zd,F2Y],()=>{p.ride=true;p.lspd=p.spd*0.7;line(p,[e.x0-1,e.zd,0],()=>{p.ride=false;p.lspd=null;p.f2=false;p.el=0;line(p,[ccx(e.foot),ccz(e.foot)],()=>gateLogic(p));});}));}
 const CORR_Y=13.4;
 function hasCorr(){return G.objs.some(o=>o.k==='pasillo'&&o.ok);}
 function corrEsc(f,rx){const es=G.objs.filter(o=>o.k==='pasillo'&&o.ok);if(!es.length)return null;
@@ -412,6 +441,7 @@ function runStep(p){
 function gateLogic(p){
   const f=p.f,g=f.stand&&f.stand.gate&&f.stand.gate.ok?f.stand.gate:null;
   if(g&&f.boardOpen){p.o=g;p.sub='board';p.mode='nav';p.tgt=g.acc;return;}
+  if(f2Try(p))return;
   if((p.vip||p.prem)&&!p.inLounge){const ls=findLounge(p);if(ls){ls.b.seats[ls.i]=p;p.seat=ls;p.sub='toLounge';p.mode='nav';p.tgt=ls.b.acc;p.o=null;return;}}
   const seat=findSeat(p,g);
   if(seat){seat.b.seats[seat.i]=p;p.seat=seat;p.sub='toSeat';p.mode='nav';p.tgt=seat.b.acc;p.o=null;return;}
@@ -443,7 +473,7 @@ function finishPax(p,sc){if(p.gone)return;releasePorter(p);dropSpot(p);p.gone=tr
   if(p.dep&&!p.boarded){p.f.live--;p.f.missed++;G.stats.missed++;}
   if(!p.dep){earn('Tasas de pasajeros',20);G.stats.arr++;G.paxTotal++;G.paxDay++;}}
 function updPax(p,dt){
-  p.moving=false;if(p.el&&p.mode!=='line'){p.el=Math.max(0,p.el-dt*30);p.corr=false;p.ride=false;}
+  p.moving=false;if(p.el&&p.mode!=='line'&&!p.f2){p.el=Math.max(0,p.el-dt*30);p.corr=false;p.ride=false;}
   switch(p.mode){
     case 'line':{const t=p.lt;let done;
       if(t.length>2){const e0=p.el||0,d0=Math.hypot(t[0]-p.x,t[1]-p.z);
@@ -461,6 +491,7 @@ function updPax(p,dt){
     case 'queue':{const o=p.o;if(!o||!G.objs.includes(o)){p.mode='replan';break;}const i=o.queue.indexOf(p);if(i<0){break;}const sp=spotPos(o,i+1);
       if(!mv(p,sp[0]+p.ox*0.15,sp[1]+p.oz*0.15,dt,p.spd*0.6)){}else p.hdg=lerpAng(p.hdg,Math.atan2(-o.qd[1],-o.qd[0]),Math.min(1,dt*4));p.wait+=dt;break;}
     case 'svc':break;
+    case 'f2':p.chk-=dt;if(p.chk<=0||p.f.boardOpen||G.t>p.f.std-42||!G.up.f2){p.chk=1e9;f2Down(p);}break;
     case 'curbwait':p.cw+=dt;p.wait+=dt*0.15;if(p.cw>75)finishPax(p,score(p));break;
     case 'stuck':p.retry-=dt;p.stuck+=dt;p.wait+=dt*0.5;if(p.retry<=0){p.retry=1.5;runStep(p);}
       if(p.stuck>45){finishPax(p,p.dep?0:5);}break;
@@ -477,6 +508,7 @@ function updPax(p,dt){
   }
 }
 function arrived(p){
+  if(p.sub==='toF2'){f2Up(p);return;}
   if(p.sub==='toLounge'&&p.seat){const b=p.seat.b,sp=b.seatPos[p.seat.i];const v=Math.round(revOf(b)*(p.vip?1.3:1));earn('VIP y protocolo',v);pop3(b.cx,b.cz,'+$'+v);p.pen=Math.max(0,p.pen-6);
     line(p,[ccx(b.acc),ccz(b.acc)],()=>line(p,sp,()=>{p.mode='seat';p.sit=true;p.inLounge=true;p.chk=0.5;p.hdg=Math.atan2(sp[1]-b.cz,sp[0]-b.cx)+Math.PI;}));return;}
   if(p.sub==='toSeat'&&p.seat){const sp=p.seat.b.seatPos[p.seat.i];line(p,sp,()=>{p.mode='seat';p.sit=true;p.chk=0.5;p.hdg=Math.atan2(p.seat.b.fd[1],p.seat.b.fd[0]);});return;}

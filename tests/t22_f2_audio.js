@@ -1,0 +1,25 @@
+const {chromium}=require('playwright');const fs=require('fs');
+(async()=>{const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium',args:['--use-gl=swiftshader','--enable-webgl','--ignore-gpu-blocklist','--autoplay-policy=no-user-gesture-required']});
+const p=await b.newPage({viewport:{width:1100,height:700}});
+await p.addInitScript(()=>{localStorage.setItem('pl_gfx',window.__Q||'1');localStorage.setItem('pl_wx','clear');let a=999;Math.random=function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};});
+const errs=[];p.on('pageerror',e=>errs.push(e.message+' '+(e.stack||'').split('\n').slice(1,3).join(' ')));p.on('console',m=>{if(m.type()==='error')errs.push('C:'+m.text().slice(0,200))});
+await p.route(/three\.min\.js/,r=>r.fulfill({body:fs.readFileSync('lib/node_modules/three/build/three.min.js'),contentType:'application/javascript'}));
+await p.route(/OrbitControls\.js/,r=>r.fulfill({body:fs.readFileSync('lib/node_modules/three/examples/js/controls/OrbitControls.js'),contentType:'application/javascript'}));
+await p.route(/fonts\.googleapis/,r=>r.fulfill({body:'',contentType:'text/css'}));
+await p.goto('file://'+process.cwd()+'/'+(process.env.F||'index.html'));await p.waitForTimeout(1500);await p.evaluate(()=>document.getElementById('bNew').click());await p.waitForTimeout(1000);await p.evaluate(()=>document.getElementById('bSound').click());
+const r=await p.evaluate(()=>{const P=window.PL,G=P.G;G.money=9e6;G.star=4;P.expandTerm(-1);P.expandTerm(1);[38,41,44,47].forEach(x=>P.placeObj('checkin',x,31,0));P.placeObj('security',50,26,0);P.placeObj('claim',62,26,0);
+ P.placeObj('gate',42,17,0);P.placeObj('gate',56,17,0);P.placeObj('standL',36,0,0);P.placeObj('standL',53,0,0);[[40,22],[44,22]].forEach(([x,y])=>P.placeObj('bench',x,y,0));P.placeObj('food',46,24,0);
+ const o=[P.buyUpgrade('upF2'),P.buyUpgrade('upIls')];['fboBase','fboStands','fboHeli','fboHeli','fboLounge','fboF2','fboRwy','fboCustoms'].forEach(k=>o.push(k+':'+P.buyFbo(k)));
+ document.querySelector('.side').style.display='none';P.setSpeed(0);return o.join(' ')+' snd='+G.sound+' ac='+(!!window.PL.AU);});console.log(r);
+let mx={bug:0,up:0,f2:0};for(let k=0;k<40;k++){const s=await p.evaluate(()=>{const P=window.PL,G=P.G;for(let i=0;i<250;i++)P.step(0.05);if(G.offers.length)G.offers.forEach(o=>P.acceptOffer(o.id));
+   return {bug:G.fa.filter(a=>a.bug).length,up:G.fa.filter(a=>a.el>5).length,f2:G.pax.filter(q=>q.f2).length,t:Math.round(G.t),hc:G.hc.map(h=>h.st).join(','),st:G.stats,au:P.AU.voices.length,err:P.AU.err||''};});
+  for(const k2 in mx)mx[k2]=Math.max(mx[k2],s[k2]);if(k%8==0)console.log(JSON.stringify(s));await p.waitForTimeout(60);}
+console.log('max',JSON.stringify(mx));
+const cam=async(n,x,y,z,tx,ty,tz)=>{await p.evaluate(([x,y,z,tx,ty,tz])=>{const P=window.PL;P.controls.target.set(tx,ty,tz);P.camera.position.set(x,y,z);P.controls.update();},[x,y,z,tx,ty,tz]);await p.waitForTimeout(1000);await p.screenshot({path:n});};
+await cam('k1_sky.png',640,40,-560,600,8,-630);
+await cam('k2_sky2.png',560,22,-650,640,10,-622);
+const bq=await p.evaluate(()=>{const a=window.PL.G.fa.find(a=>a.bug);return a?[a.x,a.z]:null;});console.log('bug at',bq);
+if(bq)await cam('k3_bug.png',bq[0]+18,12,bq[1]+22,bq[0],2,bq[1]);else await cam('k3_bug.png',1000,60,-520,1060,0,-600);
+await cam('k4_rwy.png',800,40,-110,940,0,-150);
+const pl=await p.evaluate(()=>{const q=window.PL.G.planes.find(q=>q.state==='parked')||window.PL.G.planes[0];return q?[q.x,q.z]:null;});if(pl)await cam('k5_plane.png',pl[0]+40,10,pl[1]+30,pl[0],4,pl[1]);
+console.log('AUerr',await p.evaluate(()=>window.PL.AU.err||''),'ERR',errs.slice(0,8));await b.close();})();

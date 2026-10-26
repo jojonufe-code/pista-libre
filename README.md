@@ -14,6 +14,7 @@ Abre `index.html` en el navegador (PC, tableta o teléfono).
 - `src/fbo.js` — aeródromo ejecutivo norte (simulación: jets, helicópteros, VIP, tren, shuttle)
 - `src/fbor.js` — aeródromo ejecutivo (gráficos)
 - `src/gfx.js` — gráficos avanzados: bloom, reflejos, clima y lluvia, partículas, pantallas de vuelos y cámara cinematográfica 🎬
+- `src/audio.js` — sonido: motores, ambiente, anuncios y efectos
 - `src/ui.js` — barra de herramientas, paneles, guardado y bucle principal
 - `tests/` — pruebas automáticas con Playwright
 
