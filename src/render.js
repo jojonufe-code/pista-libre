@@ -356,7 +356,9 @@ function buildObj(o,g){
       B(10,4.6,2.6,'#2b1d14',8,0,-8.4);B(10.4,0.4,3,'#c9a05a',8,4.6,-8.4);for(let k=0;k<5;k++)B(0.6,1.6,0.6,pick(['#7a1f2b','#c9a05a','#1f9e6a','#e9ecef']),4.6+k*1.6,6.4,-10.6);
       staffAt(o,8,-10.4,H2,'#141414','#141414');cyl(1.6,3,'#6b4b2e',-14,0,-10,g);{const b=new TH.Mesh(SPHG,mat('#3f7f39',{roughness:.9}));b.scale.set(2.4,3.6,2.4);b.position.set(-14,5.4,-10);g.add(b);}
       if(lv>=3){cyl(3,0.8,'#5bc0eb',-6,0,-6,g);B(6,0.4,0.4,'#c9a05a',-6,0.8,-6);}break;}
-    case 'plant':cyl(3,4,'#6b4b2e',0,0,0,g);{const b=new TH.Mesh(SPHG,mat('#3f7f39',{roughness:.9}));b.scale.set(3.6,4.6,3.6);b.position.set(0,8,0);b.castShadow=true;g.add(b);}break;
+    case 'plant':cyl(3,4,'#3a3f45',0,0,0,g);cyl(3.3,0.5,'#4a5057',0,4,0,g);cyl(2.8,0.2,'#4a3526',0,4.3,0,g);
+      // follaje en varios volúmenes y tonos
+      [[0,8.6,0,3.0,3.8,'#3f7f39'],[1.9,7.2,0.6,2.2,2.7,'#4c8c3a'],[-1.6,7.4,1.2,2.1,2.6,'#2f6b33'],[0.2,7.0,-1.9,2.2,2.5,'#4c8c3a'],[-0.9,7.1,-1.1,1.9,2.3,'#2f6b33'],[0.4,11.4,0.3,1.9,2.1,'#5a9a44']].forEach(([x,y,z,r,h,c])=>{const b=new TH.Mesh(SPHG,mat(c,{roughness:.9}));b.scale.set(r,h,r);b.position.set(x,y,z);b.castShadow=true;g.add(b);});break;
     default:if(d.land){const w=o.rw*CELL,h=o.rh*CELL;const lv=o.lv||1;
         B(5,6,5,'#e9ecef',-w/2+8,0,-h/2-1);B(5.4,0.6,5.4,'#2f6db5',-w/2+8,6,-h/2-1);B(0.4,1,10,'#f2b705',-w/2+8,3,-h/2+5);
         B(0.6,12,0.6,'#59636c',w/2-6,0,-h/2-1);sign('P',w/2-6,12,-h/2-1,g,'#2f6db5','#ffffff',4);
@@ -568,8 +570,8 @@ function carBits(x,y,z,h,c){bit(x,y+2.5,z,16,3,7.4,c,-h);bit(x-Math.cos(h)*1,y+5
 /* ---- aviones ---- */
 
 function syncPlanes(dt){
-  const seen=new Set();
-  for(const p of G.planes){let g=P3.get(p.id);if(!g){g=makePlane(p);P3.set(p.id,g);g.userData.ph=p.hdg;}seen.add(p.id);
+  const seen=new Set(),winGlow=nightFactor()*1.6;
+  for(const p of G.planes){let g=P3.get(p.id);if(!g){g=makePlane(p);P3.set(p.id,g);g.userData.ph=p.hdg;}seen.add(p.id);g.userData.bodyM.emissiveIntensity=winGlow;
     const R0=g.userData.R,alt=p.alt||0;g.position.set(p.x,R0+2.6+alt,p.z);
     const dh=((p.hdg-g.userData.ph+Math.PI*3)%(Math.PI*2))-Math.PI;g.userData.ph=p.hdg;const roll=clamp(-dh/Math.max(dt,1e-3)*0.35,-0.5,0.5);
     g.userData.roll=lerp(g.userData.roll||0,alt>8?roll:0,0.08);
@@ -579,7 +581,7 @@ function syncPlanes(dt){
     const bl=Math.floor(performance.now()/500)%2===0;g.userData.bea.visible=p.engines&&bl;if(g.userData.bea2)g.userData.bea2.visible=p.engines&&!bl;
     if(g.userData.strobes){const on=p.state!=='parked'&&p.state!=='push'&&(performance.now()%1100)<90;g.userData.strobes.forEach(x=>x.visible=on);}g.userData.ll.visible=['approach','roll','takeoff','lineup','taxiIn','taxiOut'].includes(p.state);
     if(g.userData.props)g.userData.props.forEach(pr=>{pr.rotation.x+=p.engines?dt*50:dt*2;});}
-  for(const [id,g] of P3){if(!seen.has(id)){scene.remove(g);g.traverse(o=>{if(o.geometry&&![BOXG,CYLG,SPHG].includes(o.geometry))o.geometry.dispose();});g.userData.bodyM.map.dispose();g.userData.bodyM.dispose();if(g.userData.aoM)g.userData.aoM.dispose();if(g.userData.finM){g.userData.finM.map.dispose();g.userData.finM.dispose();}P3.delete(id);}}
+  for(const [id,g] of P3){if(!seen.has(id)){scene.remove(g);g.traverse(o=>{if(o.geometry&&![BOXG,CYLG,SPHG].includes(o.geometry))o.geometry.dispose();});g.userData.bodyM.map.dispose();if(g.userData.bodyM.emissiveMap)g.userData.bodyM.emissiveMap.dispose();g.userData.bodyM.dispose();if(g.userData.aoM)g.userData.aoM.dispose();if(g.userData.finM){g.userData.finM.map.dispose();g.userData.finM.dispose();}P3.delete(id);}}
 }
 
 /* ---- entorno ---- */
@@ -591,7 +593,7 @@ function updEnv(dt){
   const ang=((h-6)/12)*Math.PI;skyU.sunDir.value.set(Math.cos(ang)*0.8,Math.max(0.05,Math.sin(ang)),0.45).normalize();
   const tg=controls.target;sun.target.position.set(tg.x,0,tg.z);{const dist=camera.position.distanceTo(tg),sz=clamp(dist*0.8,140,900),c=sun.shadow.camera;if(Math.abs(c.right-sz)>sz*0.12){c.left=-sz;c.right=sz;c.top=sz;c.bottom=-sz;c.updateProjectionMatrix();}}sun.position.set(tg.x+skyU.sunDir.value.x*1100,Math.max(300,skyU.sunDir.value.y*1100),tg.z+500);
   skyU.sunCol.value.setHSL(0.1,0.8,0.75+0.2*(1-dusk));skyDome.position.copy(camera.position);
-  CLOUDS.forEach(c=>{c.position.x+=dt*14;if(c.position.x>4200)c.position.x=-2800;c.material.opacity=0.8*(1-n*0.75);c.material.color.setScalar(1-n*0.6);});
+  CLOUDS.forEach(c=>{if(!c.userData.far){c.position.x+=dt*14;if(c.position.x>4200)c.position.x=-2800;}c.material.opacity=0.8*(1-n*0.75);c.material.color.setScalar(1-n*0.6);});
   sun.intensity=1.05*(1-n*0.92);hemi.intensity=0.55*(1-n*0.7);renderer.toneMappingExposure=1.05-n*0.25;sun.color.setHSL(0.09,0.6+dusk*0.3,0.92-dusk*0.15);
   {const want=n>0.6?ENV_NIGHT:(n>0.15||dusk>0.45)?ENV_DUSK:ENV_DAY;if(scene.environment!==want)scene.environment=want;}
   nightLights.forEach(l=>l.intensity=n*1.15);if(RWYGLOW)RWYGLOW.material.opacity=Math.min(1,0.18+n*1.1);
