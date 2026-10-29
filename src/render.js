@@ -566,7 +566,11 @@ function vehFX(v,g,L,W,H){const u=g.userData,acc=v.acc||0,sp=v.sp||0,yr=v.yr||0;
   if(n>0.25){const q=Pt(L/2+15,0);_b.makeRotationY(-v.hdg);_b.setPosition(q[0],0.14,q[1]);_s.makeScale(30,1,W*2.2);_b.multiply(_s);put('beam',_b);}}
 function syncVehicles(){const seen=new Set();for(const v of G.veh){let g=VM.get(v.id);if(!g){g=vehModel(v);VM.set(v.id,g);}seen.add(v.id);g.position.set(v.x,0,v.z);if(v.type==='bus')vehFX(v,g,40,8.6,2.2);else vehFX(v,g,v.body===1&&v.type!=='taxi'?14.5:16,7.4,2.4);}
   for(const [id,g] of VM)if(!seen.has(id)){scene.remove(g);g.traverse(o=>{if(o.geometry&&![BOXG,CYLG,SPHG].includes(o.geometry))o.geometry.dispose();});VM.delete(id);}}
-function carBits(x,y,z,h,c){bit(x,y+2.5,z,16,3,7.4,c,-h);bit(x-Math.cos(h)*1,y+5.3,z-Math.sin(h)*1,8.4,2.6,6.6,'#1d2833',-h);}
+function carBits(x,y,z,h,c){const c0=Math.cos(h),s0=Math.sin(h),P=(lx,lz)=>[x+lx*c0-lz*s0,z+lx*s0+lz*c0];
+  bit(x,y+2.4,z,16,2.8,7.4,c,-h);bit(x,y+1.3,z,16.4,0.9,7.6,'#1b1d20',-h);
+  let q=P(-1,0);bit(q[0],y+5.1,q[1],8.6,2.2,6.8,'#1d2833',-h);bit(q[0],y+6.35,q[1],8,0.45,6.6,c,-h);
+  for(const lx of [-5,5])for(const lz of [-3.5,3.5]){q=P(lx,lz);bit(q[0],y+1.4,q[1],2.8,2.8,1,'#151515',-h);}
+  for(const lz of [-2.5,2.5]){q=P(8.05,lz);bit(q[0],y+3,q[1],0.25,0.6,1.6,'#f4f4f0',-h);q=P(-8.05,lz);bit(q[0],y+3,q[1],0.25,0.6,1.6,'#b01818',-h);}}
 /* ---- aviones ---- */
 
 function syncPlanes(dt){
