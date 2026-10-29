@@ -94,7 +94,7 @@ sun.shadow.bias=-0.0004;sun.shadow.normalBias=0.8;
 const COLC={};function col(h){return COLC[h]||(COLC[h]=new TH.Color(h).convertSRGBToLinear());}
 const MATC={};function mat(h,o){const k=h+(o?JSON.stringify(o):'');if(!MATC[k])MATC[k]=new TH.MeshStandardMaterial(Object.assign({color:col(h),roughness:.7,metalness:.05},o||{}));return MATC[k];}
 const GLASS=new TH.MeshStandardMaterial({color:col('#a9d8f0'),transparent:true,opacity:.28,roughness:.05,metalness:.3,depthWrite:false});
-const BOXG=new TH.BoxGeometry(1,1,1),CYLG=new TH.CylinderGeometry(1,1,1,18),SPHG=new TH.SphereGeometry(1,16,12);
+const BOXG=new TH.BoxGeometry(1,1,1),CYLG=new TH.CylinderGeometry(1,1,1,18),SPHG=new TH.SphereGeometry(1,12,8);
 function box(w,h,d,c,x,y,z,par,o){const m=new TH.Mesh(BOXG,typeof c==='string'?mat(c,o):c);m.scale.set(w,h,d);m.position.set(x,y+h/2,z);m.castShadow=true;m.receiveShadow=true;(par||scene).add(m);return m;}
 function cyl(r,h,c,x,y,z,par,o){const m=new TH.Mesh(CYLG,typeof c==='string'?mat(c,o):c);m.scale.set(r,h,r);m.position.set(x,y+h/2,z);m.castShadow=true;m.receiveShadow=true;(par||scene).add(m);return m;}
 
@@ -481,7 +481,7 @@ function buildCity(){
   // árboles y palmeras
   for(let x=-1500;x<2800;x+=45){if(r()<0.6)trees.push([x,922,RR(8,12)]);}for(let z=920;z<2700;z+=40){trees.push([640+28,z,RR(8,11)]);trees.push([640-28,z,RR(8,11)]);}
   for(let k=0;k<500;k++){const x=RR(-1600,2900),z=RR(-600,960);if(!inAir(x,z,30)&&!corridor(x,z)&&!(x<-90))trees.push([x,z,RR(9,16)]);}
-  const trunk=new TH.InstancedMesh(new TH.CylinderGeometry(0.7,1,1,6),mat('#6b4a2e'),trees.length+palms.length),crown=new TH.InstancedMesh(new TH.SphereGeometry(1,8,6),new TH.MeshStandardMaterial({roughness:.9,flatShading:true}),trees.length+palms.length);
+  const trunk=new TH.InstancedMesh(new TH.CylinderGeometry(0.7,1,1,5,1,true),mat('#6b4a2e'),trees.length+palms.length),crown=new TH.InstancedMesh(new TH.SphereGeometry(1,6,4),new TH.MeshStandardMaterial({roughness:.9,flatShading:true}),trees.length+palms.length);
   const tm=new TH.Matrix4(),ts=new TH.Matrix4();let ti=0;
   trees.forEach(([x,z,h])=>{tm.makeTranslation(x,h*0.25,z);ts.makeScale(1,h*0.5,1);tm.multiply(ts);trunk.setMatrixAt(ti,tm);tm.makeTranslation(x,h*0.7,z);ts.makeScale(h*0.42,h*0.45,h*0.42);tm.multiply(ts);crown.setMatrixAt(ti,tm);crown.setColorAt(ti,C(PK(['#3f7f39','#4c8c3a','#2f6b33','#5a9a44'])));ti++;});
   palms.forEach(([x,z])=>{const h=RR(16,24);tm.makeTranslation(x,h/2,z);ts.makeScale(0.6,h,0.6);tm.multiply(ts);trunk.setMatrixAt(ti,tm);tm.makeTranslation(x,h,z);ts.makeScale(6,1.6,6);tm.multiply(ts);crown.setMatrixAt(ti,tm);crown.setColorAt(ti,C('#4f9a3c'));ti++;});

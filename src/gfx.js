@@ -280,6 +280,7 @@ function updFIDS(rdt){FIDS.t-=rdt;if(FIDS.t>0)return;FIDS.t=1.2;const near=camer
 
 /* ---- calidad ---- */
 function applyQ(){if(GFX.q<1){cubeDrop();GU.uRon.value=0;}GU.uFloor.value=GFX.q>=1?1:0.55;
+  const pr=Math.min(GFX.q<1?1.5:1.75,window.devicePixelRatio||1);if(renderer.getPixelRatio()!==pr)renderer.setPixelRatio(pr); // en Baja menos píxeles que pintar
   renderer.shadowMap.needsUpdate=true;}
 function setQ(q,user){GFX.q=clamp(q,0,2);if(user){GFX.user=true;try{localStorage.setItem('pl_gfx',String(GFX.q));}catch(e){}}applyQ();}
 applyQ();
@@ -329,7 +330,8 @@ function gfxRender(){GFX.extra=0;
       const dist=camera.position.distanceTo(controls.target),want=WX.wet>0.03||dist<560;
       if(want){if(GFX.fr%(q>=2?1:2)===0)MIR.on=mirrorPass();}else MIR.on=false;GU.uRon.value=MIR.on&&MIR.rt?1:0;
       if(GFX.fr%(q>=2?1:3)===0)cubeFace();
-      renderer.shadowMap.autoUpdate=true;}else GU.uRon.value=0;
+      renderer.shadowMap.autoUpdate=true;}
+    else{GU.uRon.value=0;renderer.shadowMap.autoUpdate=false;if(GFX.fr%2===0)renderer.shadowMap.needsUpdate=true;} // en Baja las sombras se recalculan un cuadro sí y otro no
     if(q>0&&PP.ok){renderer.setRenderTarget(PP.rt);renderer.render(scene,camera);GFX.calls=renderer.info.render.calls;ppPost(n);}
     else{renderer.setRenderTarget(null);renderer.render(scene,camera);GFX.calls=renderer.info.render.calls;}
   }catch(e){console.warn('gfx',e);GFX.q=0;PP.ok=false;applyQ();renderer.shadowMap.autoUpdate=true;renderer.setRenderTarget(null);renderer.render(scene,camera);}}
