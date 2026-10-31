@@ -164,9 +164,11 @@ function trainTpl(){if(TRAINT)return TRAINT;const g=new TH.Group();const W=mat('
 /* palmera */
 function palm(x,z,h,par){const r=rng(Math.round(x*7+z*13)),lean=(r()-0.5)*0.3;const tr=mat('#8a6a48',{roughness:.9}),lf=mat(r()<0.5?'#3f8a3a':'#4e9a3f',{roughness:.8});
   for(let k=0;k<4;k++){const c=new TH.Mesh(CYLG,tr);c.scale.set(0.75-k*0.1,h/4+0.3,0.75-k*0.1);c.position.set(x+lean*k*h/4,h/8+k*h/4,z);c.castShadow=true;par.add(c);}
-  const tx=x+lean*h,ty=h;for(let k=0;k<9;k++){const a=k*TAU/9+r(),m=new TH.Mesh(BOXG,lf);m.scale.set(7.5,0.2,1.5);const gg=new TH.Group();gg.position.set(tx,ty,z);gg.rotation.y=a;m.position.set(3.4,-0.9,0);m.rotation.z=-0.38;gg.add(m);par.add(gg);}
+  const tx=x+lean*h,ty=h,fm=FRONDM(r()<0.5?'#4f8f3a':'#5e9c42');for(let k=0;k<12;k++){const a=k*TAU/12+r()*0.4,o=new TH.Mesh(FRONDG,fm);o.position.set(tx,ty-0.3,z);o.rotation.y=a;const L=7.5+r()*2.5;o.scale.set(L,4+r()*3,L*0.36);par.add(o);}
   const nut=new TH.Mesh(SPHG,mat('#5a3d22'));nut.scale.setScalar(0.7);nut.position.set(tx,ty-0.6,z+0.5);par.add(nut);}
-function treeB(x,z,h,par,c){const t=new TH.Mesh(CYLG,mat('#6b4a2e'));t.scale.set(0.7,h*0.45,0.7);t.position.set(x,h*0.22,z);par.add(t);[[0,0.72,0,0.48],[0.3,0.6,0.25,0.36],[-0.28,0.62,-0.2,0.36],[0.05,0.9,-0.1,0.3]].forEach(([a,b,cz,s])=>{const m=new TH.Mesh(SPHG,mat(c||'#3f7f39',{roughness:.9}));m.scale.set(h*s,h*s*0.9,h*s);m.position.set(x+a*h,h*b,z+cz*h);m.castShadow=true;par.add(m);});}
+function treeB(x,z,h,par,c){const r=rng(Math.round(x*3+z*7)),t=new TH.Mesh(CYLG,mat('#6b4a2e',{roughness:.95}));t.scale.set(0.6,h*0.5,0.6);t.position.set(x,h*0.25,z);t.castShadow=true;par.add(t);const m=CROWNM(c||'#3f7f39');
+  [[0,0.66,0,0.42],[0.24,0.56,0.2,0.32],[-0.22,0.6,-0.18,0.33],[0.04,0.86,-0.06,0.3],[-0.1,0.52,0.26,0.27]].forEach(([a,b,cz,s])=>{const o=new TH.Mesh(CROWNG,m);const ss=h*s*(0.9+r()*0.2);o.scale.set(ss,ss*0.92,ss);o.rotation.y=r()*TAU;o.position.set(x+a*h,h*b,z+cz*h);o.castShadow=true;o.receiveShadow=true;par.add(o);});}
+function treeOld(x,z,h,par,c){const t=new TH.Mesh(CYLG,mat('#6b4a2e'));t.scale.set(0.7,h*0.45,0.7);t.position.set(x,h*0.22,z);par.add(t);[[0,0.72,0,0.48],[0.3,0.6,0.25,0.36],[-0.28,0.62,-0.2,0.36],[0.05,0.9,-0.1,0.3]].forEach(([a,b,cz,s])=>{const m=new TH.Mesh(SPHG,mat(c||'#3f7f39',{roughness:.9}));m.scale.set(h*s,h*s*0.9,h*s);m.position.set(x+a*h,h*b,z+cz*h);m.castShadow=true;par.add(m);});}
 /* ---------- escenario fijo del norte ---------- */
 let FBROOF=null,FBEM=null,FBWATER=null,FBFOUNT=null,FBGLOW=[];
 function buildFbo(W){const F=G.fbo;if(!F)return;FBROOF=null;FBGLOW=[];FBFOUNT=null;FBFOUNT2=null;
@@ -175,7 +177,7 @@ function buildFbo(W){const F=G.fbo;if(!F)return;FBROOF=null;FBGLOW=[];FBFOUNT=nu
   {const [lx,lz,rx,rz]=FB.lake;const sh=new TH.Shape();for(let i=0;i<=48;i++){const a=i/48*TAU,k=1+Math.sin(a*3)*0.03+Math.cos(a*5)*0.025;const px=lx+Math.cos(a)*rx*k,pz=lz+Math.sin(a)*rz*k;i?sh.lineTo(px,-pz):sh.moveTo(px,-pz);}
    if(!FBWATER){const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');x.fillStyle='#2f6f8c';x.fillRect(0,0,128,128);for(let i=0;i<260;i++){x.fillStyle=`rgba(255,255,255,${Math.random()*0.16})`;x.fillRect(Math.random()*128,Math.random()*128,3+Math.random()*9,1);}
      FBWATER=new TH.CanvasTexture(c);FBWATER.wrapS=FBWATER.wrapT=TH.RepeatWrapping;FBWATER.repeat.set(0.03,0.03);FBWATER.encoding=TH.sRGBEncoding;}
-   const wm=new TH.Mesh(new TH.ShapeGeometry(sh,1),new TH.MeshStandardMaterial({map:FBWATER,roughness:.06,metalness:.55,color:col('#ffffff')}));wm.rotation.x=-Math.PI/2;wm.position.y=0.25;wm.receiveShadow=true;W.add(wm);
+   const wm=new TH.Mesh(new TH.ShapeGeometry(sh,1),new TH.MeshStandardMaterial({map:FBWATER,roughness:.06,metalness:.55,color:col('#ffffff'),normalMap:WATN,normalScale:new TH.Vector2(0.45,0.45)}));wm.rotation.x=-Math.PI/2;wm.position.y=0.25;wm.receiveShadow=true;W.add(wm);
    gbox(4,1,40,'#8a6a48',lx+rx-14,0.6,lz-20,W);for(let k=0;k<5;k++)cyl(0.4,1.4,'#6b4a2e',lx+rx-16+(k%2)*4,0,lz-38+k*8,W);
    for(let i=0;i<22;i++){const a=i/22*TAU+0.1;const px=lx+Math.cos(a)*(rx+36),pz=lz+Math.sin(a)*(rz+34);if(i%3===0)palm(px,pz,16+(i%4)*2,W);else treeB(px,pz,13+(i%5)*2,W,i%2?'#3f7f39':'#4c8c3a');}
    for(let i=0;i<14;i++){const a=i/14*TAU;cyl(0.3,4,'#4a6a2a',lx+Math.cos(a)*(rx-2),0,lz+Math.sin(a)*(rz-2),W);}
@@ -248,10 +250,10 @@ function buildFbo(W){const F=G.fbo;if(!F)return;FBROOF=null;FBGLOW=[];FBFOUNT=nu
    const fj=new TH.Group();fj.position.set(600,0,-792);W.add(fj);FBFOUNT2=fj;for(let i=0;i<6;i++){const a=i/6*TAU;palm(600+Math.cos(a)*17,-792+Math.sin(a)*17,13,W);}}
   {const r=rng(5);for(let i=0;i<16;i++){const px=736+(i%8)*18,pz=i<8?-776:-738;carMesh(pick(['#0e0f11','#c9a24a','#8a1f1f','#f4f4f4','#1b2a3a','#5a6570']),px,pz,i<8?Math.PI/2:-Math.PI/2,W,r);}}
   // faroles
-  for(let X=-190;X<450;X+=60){cyl(0.4,12,'#59636c',X,0,-779.5,W);gbox(1.4,0.6,3,FBEM,X,12,-781.5,W);fbGlow(X,12,-782,9);}
-  for(let Z=-840;Z<-760;Z+=30){cyl(0.4,12,'#59636c',620,0,Z,W);gbox(1.4,0.6,3,FBEM,620,12,Z,W);fbGlow(620,12,Z,9);}
+  for(let X=-190;X<450;X+=60){cyl(0.4,12,'#59636c',X,0,-779.5,W);gbox(1.4,0.6,3,FBEM,X,12,-781.5,W);fbGlow(X,12,-782,9);POOLP.push([X,-783,17]);}
+  for(let Z=-840;Z<-760;Z+=30){cyl(0.4,12,'#59636c',620,0,Z,W);gbox(1.4,0.6,3,FBEM,620,12,Z,W);fbGlow(620,12,Z,9);POOLP.push([620,Z,17]);}
   // mástiles de iluminación de plataforma
-  for(const X of [200,480,760,960]){cyl(1,34,'#7d868d',X,0,-606,W);gbox(8,2,3,'#3a3f45',X,34,-606,W);gbox(7,0.8,2,FBEM,X,33.4,-604.8,W);fbGlow(X,33,-603,28);}
+  for(const X of [200,480,760,960]){cyl(1,34,'#7d868d',X,0,-606,W);gbox(8,2,3,'#3a3f45',X,34,-606,W);gbox(7,0.8,2,FBEM,X,33.4,-604.8,W);fbGlow(X,33,-603,28);POOLP.push([X,-575,48]);}
   // hangares
   for(let i=0;i<F.hang;i++){const hx=FB.hang[i],hz=(FB.hz0+FB.hz1)/2,w=76,d=FB.hz1-FB.hz0;gbox(w,10,d,'#c9ced3',hx,0,hz,W);
     const rg=new TH.Group();rg.position.set(hx,10,hz);rg.scale.set(1,0.32,1);W.add(rg);const roof=new TH.Mesh(new TH.CylinderGeometry(w/2,w/2,d+2,28,1,true,Math.PI/2,Math.PI),mat('#9aa3aa',{metalness:.55,roughness:.35,side:TH.DoubleSide}));roof.rotation.x=Math.PI/2;roof.castShadow=true;rg.add(roof);

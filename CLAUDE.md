@@ -10,3 +10,6 @@
 - `audio.js`: bus maestro con compresor (`auOut()`, volumen en localStorage `pl_vol`), voces de motor posicionales (jets, hélices, rotor), murmullo de terminal, clima, aves/grillos, anuncios de embarque con `speak()` y efectos `auSfx(k)`. Todo lo que suene debe conectarse a `auOut()`.
 - Segundo piso: `G.up.f2` (terminal principal, `f2Get()` en sim.js calcula escaleras y lugares; modo de pasajero `'f2'`) y `G.fbo.f2` (Sky Lounge, asientos con altura `FB2Y`, `fbUp()/fbDown()` para la escalera).
 - Personas: `person3(...,md,st)` dibuja cara y gestos según ánimo (0-100) y estado (`wait`, `bag`, `rush`, `joy`).
+- Geometrías compartidas instanciables: marcar `geo.userData.inst=true` (copas `CROWNG`, frondas `FRONDG`, carrocerías `carGeo`); `bake()` las agrupa y `disposeGroup()` no las destruye (`isInstG`).
+- Aviones: fuselaje torneado `fuseGeo(L,R)` (la librea mapea nariz→cola en todo el canvas; el dibujo antiguo ocupa la sección central vía `NR/KV`), góndolas `nacGeo`.
+- En el pase de reflejo (`mirrorPass`) hay que ocultar todo material que lea `uRefl` (suelos con `GFX_GROUND`), si no WebGL da "feedback loop".
